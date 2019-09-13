@@ -63,5 +63,4 @@ export function denormalize(
   input: any,
   schema: Schema,
   entities: any,
-  entityClass?: any,
 ): any;

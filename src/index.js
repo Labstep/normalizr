@@ -54,8 +54,9 @@ export const normalize = (input, schema) => {
   return { entities, result };
 };
 
-const unvisitEntity = (id, schema, unvisit, getEntity, cache, EntityClass) => {
+const unvisitEntity = (id, schema, unvisit, getEntity, cache) => {
   const entity = getEntity(id, schema);
+
   if (typeof entity !== 'object' || entity === null) {
     return entity;
   }
@@ -66,22 +67,20 @@ const unvisitEntity = (id, schema, unvisit, getEntity, cache, EntityClass) => {
 
   if (!cache[schema.key][id]) {
     // Ensure we don't mutate it non-immutable objects
-    const entityCopy = ImmutableUtils.isImmutable(entity)
-      ? entity
-      : EntityClass
-      ? new EntityClass(entity) // or perhaps something like schema.createEntity(entity)
-      : { ...entity };
+    const entityCopy = ImmutableUtils.isImmutable(entity) ? entity : { ...entity };
 
     // Need to set this first so that if it is referenced further within the
     // denormalization the reference will already exist.
     cache[schema.key][id] = entityCopy;
-    cache[schema.key][id] = schema.denormalize(entityCopy, unvisit);
+    const denormalizedEntity = schema.denormalize(entityCopy, unvisit);
+    // Labstep specific: Cast class to object;
+    cache[schema.key][id] = schema.EntityClass ? new schema.EntityClass(denormalizedEntity) : denormalizedEntity;
   }
 
   return cache[schema.key][id];
 };
 
-const getUnvisit = (entities, EntityClass) => {
+const getUnvisit = (entities) => {
   const cache = {};
   const getEntity = getEntities(entities);
 
@@ -96,7 +95,7 @@ const getUnvisit = (entities, EntityClass) => {
     }
 
     if (schema instanceof EntitySchema) {
-      return unvisitEntity(input, schema, unvisit, getEntity, cache, EntityClass);
+      return unvisitEntity(input, schema, unvisit, getEntity, cache);
     }
 
     return schema.denormalize(input, unvisit);
@@ -121,8 +120,8 @@ const getEntities = (entities) => {
   };
 };
 
-export const denormalize = (input, schema, entities, EntityClass) => {
+export const denormalize = (input, schema, entities) => {
   if (typeof input !== 'undefined') {
-    return getUnvisit(entities)(input, schema, EntityClass);
+    return getUnvisit(entities)(input, schema);
   }
 };
