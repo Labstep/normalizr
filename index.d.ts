@@ -62,5 +62,6 @@ export function normalize<T = any, E = { [key:string]: { [key:string]: T }}, R =
 export function denormalize(
   input: any,
   schema: Schema,
-  entities: any
+  entities: any,
+  entityClass?: any,
 ): any;
