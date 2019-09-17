@@ -20,6 +20,7 @@ declare namespace schema {
     key: string
     getId: SchemaFunction
     _processStrategy: StrategyFunction<T>
+    EntityClass: any
   }
 
   export class Object<T = any> {
