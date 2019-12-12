@@ -169,15 +169,26 @@ var EntitySchema =
     _proto.normalize = function normalize(input, parent, key, visit, addEntity, visitedEntities) {
       var _this = this;
 
+      var id = this.getId(input, parent, key);
+      var entityType = this.key;
+
+      if (!(entityType in visitedEntities)) {
+        visitedEntities[entityType] = {};
+      }
+
+      if (!(id in visitedEntities[entityType])) {
+        visitedEntities[entityType][id] = [];
+      }
+
       if (
-        visitedEntities.some(function(entity) {
+        visitedEntities[entityType][id].some(function(entity) {
           return entity === input;
         })
       ) {
-        return this.getId(input, parent, key);
+        return id;
       }
 
-      visitedEntities.push(input);
+      visitedEntities[entityType][id].push(input);
 
       var processedEntity = this._processStrategy(input, parent, key);
 
@@ -188,7 +199,7 @@ var EntitySchema =
         }
       });
       addEntity(this, processedEntity, input, parent, key);
-      return this.getId(input, parent, key);
+      return id;
     };
 
     _proto.denormalize = function denormalize(entity, unvisit) {
@@ -561,7 +572,7 @@ var normalize$1 = function normalize(input, schema) {
 
   var entities = {};
   var addEntity = addEntities(entities);
-  var visitedEntities = [];
+  var visitedEntities = {};
   var result = visit(input, input, null, schema, addEntity, visitedEntities);
   return {
     entities: entities,
@@ -589,9 +600,13 @@ var unvisitEntity = function unvisitEntity(id, schema, unvisit, getEntity, cache
     var denormalizedEntity = schema.denormalize(entityCopy, unvisit); // Labstep specific: Cast class to object;
 
     cache[schema.key][id] = schema.EntityClass ? new schema.EntityClass(denormalizedEntity) : denormalizedEntity;
-  }
+  } // Labstep specific: Making sure the class is cast
 
-  return cache[schema.key][id];
+  var result =
+    cache[schema.key][id].constructor.name === 'Object' && schema.EntityClass
+      ? new schema.EntityClass(cache[schema.key][id])
+      : cache[schema.key][id];
+  return result;
 };
 
 var getUnvisit = function getUnvisit(entities) {

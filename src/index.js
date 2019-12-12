@@ -77,7 +77,13 @@ const unvisitEntity = (id, schema, unvisit, getEntity, cache) => {
     cache[schema.key][id] = schema.EntityClass ? new schema.EntityClass(denormalizedEntity) : denormalizedEntity;
   }
 
-  return cache[schema.key][id];
+  // Labstep specific: Making sure the class is cast
+  const result =
+    cache[schema.key][id].constructor.name === 'Object' && schema.EntityClass
+      ? new schema.EntityClass(cache[schema.key][id])
+      : cache[schema.key][id];
+
+  return result;
 };
 
 const getUnvisit = (entities) => {
